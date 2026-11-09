@@ -89,9 +89,26 @@ export function createSheet(prefix: string, onDismiss: () => void): Sheet {
   panel.addEventListener("touchend", endDrag);
   panel.addEventListener("touchcancel", endDrag);
 
+  // iOS home-screen apps: when the keyboard or date picker opens, iOS scrolls the page to make room
+  // and sometimes doesn't scroll back when it closes. The page then looks right, but taps land on the
+  // field above the one you touched. So once no field is in use, put the page back where it was.
+  let pageScrollY = 0;
+
+  function restorePageScroll(): void {
+    if (layer.hidden) return;
+    const active = document.activeElement;
+    const typing = active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement;
+    if (!typing && window.scrollY !== pageScrollY) window.scrollTo(window.scrollX, pageScrollY);
+  }
+
+  // Focus moves between fields on its own; wait a moment so a jump to the next field doesn't count.
+  panel.addEventListener("focusout", () => setTimeout(restorePageScroll, 100));
+  window.visualViewport?.addEventListener("resize", restorePageScroll);
+
   return {
     open() {
       clearTimeout(hideTimer);
+      pageScrollY = window.scrollY;
       panel.style.transform = "";
       layer.hidden = false;
       document.body.style.overflow = "hidden";
@@ -105,6 +122,7 @@ export function createSheet(prefix: string, onDismiss: () => void): Sheet {
       layer.classList.remove("open");
       panel.style.transform = "";
       document.body.style.overflow = "";
+      window.scrollTo(window.scrollX, pageScrollY);
       clearTimeout(hideTimer);
       hideTimer = setTimeout(() => {
         layer.hidden = true;
