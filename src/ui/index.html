@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#49516f" />
+    <!-- Home-screen app on the iPhone: icon, name under the icon, no Safari bars, white status bar text. -->
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="Bauchbuch" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <title>Gesundheitstracker</title>
+  </head>
+  <body>
+    <main id="start">
+      <h1 class="visually-hidden">Gesundheitstracker</h1>
+      <!-- Stays at the top; only the list below scrolls. -->
+      <header class="top-bar">
+        <p id="install-hint" class="install-hint" hidden>
+          Leg die App auf den Home-Bildschirm: Teilen → Zum Home-Bildschirm. Einträge hier in Safari
+          erscheinen dort nicht.
+        </p>
+        <div class="entry-buttons">
+          <button type="button" id="open-meal" class="big" aria-label="Mahlzeit eintragen"></button>
+          <button type="button" id="open-event" class="big" aria-label="Ereignis eintragen"></button>
+        </div>
+        <p id="start-message" class="message" aria-live="polite"></p>
+      </header>
+      <h2>Heute</h2>
+      <ul id="today-list" class="entries"></ul>
+      <p id="today-empty" class="empty">Heute noch keine Einträge.</p>
+      <p id="version" class="version"></p>
+    </main>
+
+    <div id="meal-sheet" class="sheet-layer" hidden>
+      <div id="meal-backdrop" class="sheet-backdrop"></div>
+      <section id="meal-panel" class="sheet" role="dialog" aria-modal="true" aria-labelledby="meal-title">
+        <div class="sheet-handle-area">
+          <div class="sheet-handle" aria-hidden="true"></div>
+          <h2 id="meal-title">Mahlzeit</h2>
+        </div>
+        <form id="meal" novalidate>
+          <label for="meal-time">Wann</label>
+          <input type="datetime-local" id="meal-time" />
+          <label for="meal-text">Was hast du gegessen?</label>
+          <textarea id="meal-text" rows="2" maxlength="200" autocomplete="off" enterkeyhint="done"></textarea>
+          <button type="submit" id="meal-save" class="primary">Speichern</button>
+          <p id="meal-error" class="error" aria-live="assertive"></p>
+        </form>
+      </section>
+    </div>
+
+    <div id="event-sheet" class="sheet-layer" hidden>
+      <div id="event-backdrop" class="sheet-backdrop"></div>
+      <section id="event-panel" class="sheet" role="dialog" aria-modal="true" aria-labelledby="event-title">
+        <div class="sheet-handle-area">
+          <div class="sheet-handle" aria-hidden="true"></div>
+          <h2 id="event-title">Ereignis</h2>
+        </div>
+        <form id="event" novalidate>
+          <label for="event-time">Wann</label>
+          <input type="datetime-local" id="event-time" />
+          <label for="event-pain-input">Schmerzen</label>
+          <div id="event-pain" class="level-slider"></div>
+          <label for="event-stool-input">Stuhlgang</label>
+          <div id="event-stool" class="level-slider"></div>
+          <div id="event-urgency-field" class="field" hidden>
+            <label for="event-urgency-input">Dringlichkeit</label>
+            <div id="event-urgency" class="level-slider"></div>
+          </div>
+          <label for="event-note">Notiz</label>
+          <textarea id="event-note" rows="2" maxlength="200" autocomplete="off" enterkeyhint="done"></textarea>
+          <button type="submit" id="event-save" class="primary">Speichern</button>
+          <p id="event-error" class="error" aria-live="assertive"></p>
+        </form>
+      </section>
+    </div>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

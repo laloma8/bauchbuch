@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM"],
+    "types": ["node"],
+    // scripts/*.ts run directly with Node, which needs the .ts in import paths.
+    "allowImportingTsExtensions": true
+  },
+  "include": ["src/**/*.test.ts", "*.config.ts", "scripts/*.ts"]
+}

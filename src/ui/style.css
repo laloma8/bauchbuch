@@ -1,0 +1,414 @@
+/* Palette: https://coolors.co/8ea4d2-6279b8-49516f-496f5d-4c9f70 */
+:root {
+  --background: #49516f;
+  --button: #6279b8;
+  --surface: #6279b8; /* overlay */
+  --track: rgb(255 255 255 / 35%);
+  --save: #496f5d; /* not ready yet */
+  --save-ready: #4c9f70;
+  --text: #ffffff;
+  --muted: #8ea4d2;
+  --line: rgb(255 255 255 / 15%);
+  --field-border: rgb(255 255 255 / 35%);
+  --shadow: rgb(0 0 0 / 30%);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: var(--text);
+  background: var(--background);
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+main {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 0 16px calc(16px + env(safe-area-inset-bottom));
+}
+
+/* Readable for screen readers, not shown on screen. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* The two big buttons stay put while the list scrolls underneath. */
+.top-bar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 0 -16px;
+  padding: calc(16px + env(safe-area-inset-top)) 16px 4px;
+  background: var(--background);
+  border-bottom: 1px solid var(--line);
+}
+
+h1 {
+  font-size: 1.4rem;
+  margin: 8px 0 16px;
+}
+
+h2 {
+  font-size: 1.1rem;
+  margin: 24px 0 8px;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Start */
+
+.entry-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  justify-items: center;
+}
+
+/* Two big circles. */
+.big {
+  width: 100%;
+  max-width: 170px;
+  aspect-ratio: 1;
+  border: none;
+  border-radius: 50%;
+  background: var(--button);
+  color: var(--text);
+  font-size: 1.15rem;
+  font-weight: 600;
+  box-shadow: 0 2px 10px var(--shadow);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+/* No text on the buttons, so the icons are large. */
+.button-icon {
+  width: 60%;
+  height: 60%;
+}
+
+.big:disabled {
+  opacity: 0.35;
+  box-shadow: none;
+  cursor: default;
+}
+
+.message {
+  min-height: 1.4em;
+  margin: 12px 0 0;
+  color: var(--muted);
+}
+
+.entries {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.entries li {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  align-items: start;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+  overflow-wrap: anywhere;
+}
+
+.entries .details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.entries .kind-icon {
+  width: 22px;
+  height: 22px;
+  color: var(--muted);
+}
+
+.entries .note {
+  color: var(--muted);
+}
+
+.entries .time {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.version {
+  margin: 32px 0 8px;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+/* Only shown in Safari on the published site (see install-hint.ts). */
+.install-hint {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--button);
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
+.install-hint[hidden] {
+  display: none;
+}
+
+.empty {
+  color: var(--muted);
+}
+
+/* Overlay sliding up from the bottom */
+
+.sheet-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+}
+
+.sheet-layer[hidden] {
+  display: none;
+}
+
+.sheet-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgb(0 0 0 / 50%);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-width: 480px;
+  min-height: 75vh;
+  max-height: 92vh;
+  margin: 0 auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 16px calc(24px + env(safe-area-inset-bottom));
+  border-radius: 20px 20px 0 0;
+  background: var(--surface);
+  box-shadow: 0 -4px 20px var(--shadow);
+  transform: translateY(100%);
+  transition: transform 0.25s ease;
+}
+
+.sheet-layer.open .sheet-backdrop {
+  opacity: 1;
+}
+
+.sheet-layer.open .sheet {
+  transform: translateY(0);
+}
+
+.sheet.dragging {
+  transition: none;
+}
+
+/* The handle shows that the overlay can be swiped down (anywhere, see sheet.ts). */
+.sheet-handle-area {
+  padding: 10px 0 4px;
+}
+
+.sheet-handle {
+  width: 40px;
+  height: 5px;
+  margin: 0 auto 8px;
+  border-radius: 3px;
+  background: var(--field-border);
+}
+
+.sheet-handle-area h2 {
+  margin: 8px 0 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet,
+  .sheet-backdrop {
+    transition: none;
+  }
+}
+
+/* Forms */
+
+form {
+  display: flex;
+  flex-direction: column;
+}
+
+label {
+  margin: 16px 0 6px;
+  font-weight: 600;
+}
+
+input,
+textarea {
+  /* 16px or more keeps iOS from zooming into the field. */
+  font: inherit;
+  font-size: 1rem;
+  padding: 12px;
+  border: 1px solid var(--field-border);
+  border-radius: 10px;
+  background: var(--background);
+  color: var(--text);
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 48px;
+}
+
+/* iOS draws the date picker wider than the screen unless its native look is switched off. */
+input[type="datetime-local"] {
+  -webkit-appearance: none;
+  appearance: none;
+  text-align: left;
+}
+
+/* Grows with the text (see meal-form.ts), so the whole entry stays visible. */
+textarea {
+  resize: none;
+  overflow: hidden;
+  line-height: 1.4;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+}
+
+.field[hidden] {
+  display: none;
+}
+
+/* Sliders with fixed levels (see level-slider.ts) */
+
+.level-slider {
+  /* Room so the labels at both ends stay inside the overlay. */
+  padding: 0 4px;
+}
+
+.level-slider input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.level-slider input[type="range"]::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--track);
+}
+
+.level-slider input[type="range"]::-moz-range-track {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--track);
+}
+
+.level-slider input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 28px;
+  height: 28px;
+  margin-top: -11px;
+  border: none;
+  border-radius: 50%;
+  background: var(--text);
+  box-shadow: 0 1px 4px var(--shadow);
+}
+
+.level-slider input[type="range"]::-moz-range-thumb {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: var(--text);
+  box-shadow: 0 1px 4px var(--shadow);
+}
+
+.level-labels {
+  position: relative;
+  height: 32px;
+  /* The thumb's centre runs 14px in from each end of the track. */
+  margin: 0 14px;
+}
+
+.level-labels button {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  padding: 4px 2px;
+  border: none;
+  background: none;
+  color: var(--text);
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.level-labels button[data-edge="start"] {
+  transform: translateX(-14px);
+}
+
+.level-labels button[data-edge="end"] {
+  transform: translateX(calc(-100% + 14px));
+}
+
+.level-labels button[aria-pressed="true"] {
+  font-weight: 700;
+}
+
+.level-labels button[aria-pressed="false"] {
+  opacity: 0.75;
+}
+
+.primary {
+  margin-top: 24px;
+  padding: 14px;
+  border: none;
+  border-radius: 999px;
+  /* Dark green until everything needed is filled in (see "ready" below). */
+  background: var(--save);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 1.05rem;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.primary.ready {
+  background: var(--save-ready);
+}
+
+/* The light blue would be hard to read on the blue overlay, so errors are white. */
+.error {
+  min-height: 1.4em;
+  margin: 12px 0 0;
+  color: var(--text);
+}

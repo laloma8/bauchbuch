@@ -1,0 +1,9 @@
+node_modules/
+dist/
+coverage/
+.env
+.env.*
+!.env.example
+.DS_Store
+# Product docs, specs and plans describe the person using the app; they stay on this Mac only.
+docs/

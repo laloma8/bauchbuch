@@ -1,0 +1,21 @@
+{
+  "format": "npx prettier --write {file}",
+  "lint": "npx eslint {file}",
+  "typecheck": "npm run typecheck",
+  "relatedTests": "npx vitest related {file} --run",
+  "allTests": "npx vitest run --coverage",
+  "ensureDeps": "",
+  "coverageSummary": "coverage/coverage-summary.json",
+  "coverageThreshold": 85,
+  "maxStopRetries": 3,
+  "sourceExtensions": [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".vue", ".svelte", ".css", ".json"],
+  "ignoredFolders": ["node_modules", "dist", "build", "coverage", ".claude", ".git", "docs"],
+  "timeouts": {
+    "format": 30,
+    "lint": 60,
+    "typecheck": 120,
+    "relatedTests": 120,
+    "allTests": 480,
+    "ensureDeps": 180
+  }
+}
