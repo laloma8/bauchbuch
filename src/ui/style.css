@@ -1,13 +1,14 @@
-/* Palette: https://coolors.co/8ea4d2-6279b8-49516f-496f5d-4c9f70 */
+/* Palette: https://coolors.co/c5d0e8-192238-49516f-496f5d-1a3826 */
 :root {
-  --background: #49516f;
-  --button: #6279b8;
-  --surface: #6279b8; /* overlay */
+  --background: #192238; /* Prussian Blue */
+  --button: #49516f; /* Dusk Blue */
+  --surface: #49516f; /* overlay */
+  --icon: #c5d0e8; /* Lavender */
   --track: rgb(255 255 255 / 35%);
-  --save: #496f5d; /* not ready yet */
-  --save-ready: #4c9f70;
+  --save: #1a3826; /* Evergreen: not ready yet */
+  --save-ready: #496f5d; /* Deep Teal */
   --text: #ffffff;
-  --muted: #8ea4d2;
+  --muted: #c5d0e8;
   --line: rgb(255 255 255 / 15%);
   --field-border: rgb(255 255 255 / 35%);
   --shadow: rgb(0 0 0 / 30%);
@@ -98,6 +99,7 @@ button {
 
 /* No text on the buttons, so the icons are large. */
 .button-icon {
+  color: var(--icon);
   width: 60%;
   height: 60%;
 }
@@ -137,9 +139,9 @@ button {
 }
 
 .entries .kind-icon {
+  color: var(--icon);
   width: 22px;
   height: 22px;
-  color: var(--muted);
 }
 
 .entries .note {

@@ -1,7 +1,7 @@
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 
-const SLATE = "#49516f";
+const BACKGROUND = "#192238"; // Prussian Blue
 
 export default defineConfig({
   root: "src/ui",
@@ -37,8 +37,8 @@ export default defineConfig({
         start_url: "./",
         scope: "./",
         display: "standalone",
-        background_color: SLATE,
-        theme_color: SLATE,
+        background_color: BACKGROUND,
+        theme_color: BACKGROUND,
         icons: [
           { src: "icon-192.png", sizes: "192x192", type: "image/png" },
           { src: "icon-512.png", sizes: "512x512", type: "image/png" },

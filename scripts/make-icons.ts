@@ -1,11 +1,11 @@
-// Draws the home-screen icon (plate + poo, white on slate) and saves it as PNGs in src/ui/public.
+// Draws the home-screen icon (plate + poo, lavender on Prussian Blue) and saves it as PNGs in src/ui/public.
 // Run with `npm run icons` after changing the icons; the PNGs are committed, the build only copies them.
 import { writeFileSync } from "node:fs";
 import { Resvg } from "@resvg/resvg-js";
 import { STROKE, iconShapesMarkup } from "../src/ui/icon-shapes.ts";
 
-const BACKGROUND = "#49516f";
-const LINE = "#ffffff";
+const BACKGROUND = "#192238"; // Prussian Blue, like the app
+const LINE = "#c5d0e8"; // Lavender, like the icons in the app
 const OUT_DIR = new URL("../src/ui/public/", import.meta.url);
 
 /**
