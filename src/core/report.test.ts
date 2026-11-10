@@ -5,10 +5,9 @@ import {
   buildReportDays,
   checkReportRange,
   defaultReportRange,
-  eventLine,
   hasReportEntries,
-  mealLine,
   reportFileName,
+  reportLine,
 } from "./report";
 
 const today = new Date(2026, 10, 10, 9, 30);
@@ -61,18 +60,17 @@ describe("buildReportDays", () => {
   it("lists every day of the range, oldest first, including empty days", () => {
     const days = buildReportDays(entries, new Date(2026, 10, 2), new Date(2026, 10, 4));
     expect(days.map((day) => day.day)).toEqual([new Date(2026, 10, 2), new Date(2026, 10, 3), new Date(2026, 10, 4)]);
-    expect(days[0]).toEqual({ day: new Date(2026, 10, 2), meals: [], events: [] });
+    expect(days[0]).toEqual({ day: new Date(2026, 10, 2), entries: [] });
   });
 
-  it("orders each day from morning to evening and splits meals and events", () => {
+  it("mixes meals and events from morning to evening", () => {
     const [, day] = buildReportDays(entries, new Date(2026, 10, 2), new Date(2026, 10, 4));
-    expect(day?.meals.map((m) => m.id)).toEqual(["breakfast", "lunch"]);
-    expect(day?.events.map((e) => e.id)).toEqual(["cramps"]);
+    expect(day?.entries.map((entry) => entry.id)).toEqual(["breakfast", "cramps", "lunch"]);
   });
 
   it("leaves out entries outside the range", () => {
     const ids = buildReportDays(entries, new Date(2026, 10, 2), new Date(2026, 10, 4)).flatMap((day) =>
-      [...day.meals, ...day.events].map((entry) => entry.id),
+      day.entries.map((entry) => entry.id),
     );
     expect(ids).not.toContain("before");
     expect(ids).not.toContain("after");
@@ -90,21 +88,28 @@ describe("buildReportDays", () => {
 });
 
 describe("report texts", () => {
-  it("writes meal and event lines", () => {
-    expect(mealLine({ id: "a", kind: "meal", time: new Date(2026, 10, 3, 8, 0).toISOString(), text: "Müsli" })).toBe(
-      "08:00 Müsli",
-    );
-    expect(
-      eventLine({
-        id: "b",
-        kind: "event",
-        time: new Date(2026, 10, 3, 10, 30).toISOString(),
-        pain: "medium",
-        stool: "liquid",
-        urgency: "strong",
-        note: "",
-      }),
-    ).toBe("10:30 Schmerzen mittel · Stuhlgang flüssig · Dringlichkeit stark");
+  it("writes meal and event lines, with the note apart", () => {
+    expect(reportLine({ id: "a", kind: "meal", time: new Date(2026, 10, 3, 8, 0).toISOString(), text: "Müsli" })).toEqual({
+      time: "08:00",
+      kind: "Mahlzeit",
+      text: "Müsli",
+    });
+    const event: Entry = {
+      id: "b",
+      kind: "event",
+      time: new Date(2026, 10, 3, 10, 30).toISOString(),
+      pain: "medium",
+      stool: "liquid",
+      urgency: "strong",
+      note: "nach dem Kaffee",
+    };
+    expect(reportLine(event)).toEqual({
+      time: "10:30",
+      kind: "Ereignis",
+      text: "Schmerzen mittel · Stuhlgang flüssig · Dringlichkeit stark",
+      note: "nach dem Kaffee",
+    });
+    expect(reportLine({ ...event, note: "" })).not.toHaveProperty("note");
   });
 
   it("formats dates and a file name without personal details", () => {

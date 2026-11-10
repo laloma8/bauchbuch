@@ -3,6 +3,7 @@ import {
   formatClock,
   formatDateTime,
   formatDayName,
+  formatLongDay,
   formatShortDay,
   fromDateInputValue,
   fromDateTimeInputValue,
@@ -89,5 +90,11 @@ describe("date input values", () => {
   it("returns undefined for empty or invalid values", () => {
     expect(fromDateInputValue("")).toBeUndefined();
     expect(fromDateInputValue("2026-02-30")).toBeUndefined();
+  });
+});
+
+describe("formatLongDay", () => {
+  it("adds the year", () => {
+    expect(formatLongDay(new Date(2026, 10, 3))).toBe("Di, 03.11.2026");
   });
 });

@@ -32,7 +32,6 @@
     "workbox-window": "^7.4.1"
   },
   "dependencies": {
-    "jspdf": "^4.2.1",
-    "jspdf-autotable": "^5.0.9"
+    "jspdf": "^4.2.1"
   }
 }

@@ -1,17 +1,55 @@
-import { eventLine, formatDate, formatShortDay, mealLine, reportFileName, type ReportDay, type ReportRange } from "../core";
+import { formatDate, formatLongDay, reportFileName, reportLine, type ReportDay, type ReportRange } from "../core";
 
 const TITLE = "Ess- und Beschwerdeprotokoll";
-/** Page margin in mm (A4 portrait: 210 × 297 mm). */
-const MARGIN = 14;
+
+// A4 portrait in mm.
+const PAGE_WIDTH = 210;
+const PAGE_HEIGHT = 297;
+const MARGIN = 16;
+const BOTTOM = PAGE_HEIGHT - MARGIN - 6; // room for the page number
+const TIME_X = MARGIN + 2;
+const KIND_X = MARGIN + 16;
+const TEXT_X = MARGIN + 38;
+const TEXT_WIDTH = PAGE_WIDTH - MARGIN - TEXT_X;
+const LINE = 4.6; // line height for 10 pt text
+const DAY_HEADING = 7;
+const DAY_GAP = 4;
+
+type Doc = InstanceType<(typeof import("jspdf"))["jsPDF"]>;
+
+interface DrawnLine {
+  time: string;
+  kind: string;
+  text: string[];
+  note: string[];
+}
+
+/** Lines of one day, already wrapped to the text column. */
+function layoutDay(doc: Doc, day: ReportDay): DrawnLine[] {
+  return day.entries.map((entry) => {
+    const line = reportLine(entry);
+    doc.setFont("helvetica", "normal");
+    const text = doc.splitTextToSize(line.text, TEXT_WIDTH) as string[];
+    doc.setFont("helvetica", "italic");
+    const note = line.note === undefined ? [] : (doc.splitTextToSize(`„${line.note}“`, TEXT_WIDTH) as string[]);
+    return { time: line.time, kind: line.kind, text, note };
+  });
+}
+
+function lineHeight(line: DrawnLine): number {
+  return (line.text.length + line.note.length) * LINE + 1;
+}
 
 /**
- * The report as a PDF: title, period and one table row per day, black on white, A4 portrait.
+ * The report as a PDF: title, period and a diary-like list – each day as a heading with its entries
+ * from morning to evening. A day is kept on one page whenever it fits on a page at all.
  * Built in the app because printing doesn't work reliably in iPhone home-screen apps.
  */
 export async function buildReportPdf(days: readonly ReportDay[], range: ReportRange): Promise<Blob> {
   // Loaded only when needed, so the app itself starts quickly; the service worker keeps it offline.
-  const [{ jsPDF }, { autoTable }] = await Promise.all([import("jspdf"), import("jspdf-autotable")]);
+  const { jsPDF } = await import("jspdf");
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  doc.setTextColor(0);
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
@@ -20,33 +58,63 @@ export async function buildReportPdf(days: readonly ReportDay[], range: ReportRa
   doc.setFontSize(11);
   doc.text(`${formatDate(range.from)} – ${formatDate(range.to)}`, MARGIN, MARGIN + 11);
 
-  autoTable(doc, {
-    startY: MARGIN + 16,
-    margin: { left: MARGIN, right: MARGIN, top: MARGIN, bottom: MARGIN + 6 },
-    theme: "grid",
-    head: [["Tag", "Mahlzeiten", "Ereignisse"]],
-    body: days.map((day) => [
-      formatShortDay(day.day),
-      day.meals.length === 0 ? "–" : day.meals.map(mealLine).join("\n"),
-      day.events.length === 0
-        ? "–"
-        : day.events
-            // A cell has only one font, so the note stands in quotes on its own line.
-            .map((event) => (event.note === "" ? eventLine(event) : `${eventLine(event)}\n„${event.note}“`))
-            .join("\n"),
-    ]),
-    // A day is never split across two pages; the header row repeats on every page.
-    rowPageBreak: "avoid",
-    showHead: "everyPage",
-    styles: { font: "helvetica", fontSize: 9, textColor: 0, lineColor: 160, lineWidth: 0.2, cellPadding: 1.8 },
-    headStyles: { fillColor: 230, textColor: 0, fontStyle: "bold" },
-    columnStyles: { 0: { cellWidth: 22 } },
-    didDrawPage: () => {
-      const page = doc.getCurrentPageInfo().pageNumber;
-      doc.setFontSize(8);
-      doc.text(`Seite ${page}`, 210 - MARGIN, 297 - MARGIN / 2, { align: "right" });
-    },
-  });
+  let y = MARGIN + 20;
+  doc.setFontSize(10);
+
+  function newPage(): void {
+    doc.addPage();
+    y = MARGIN;
+  }
+
+  for (const day of days) {
+    const lines = layoutDay(doc, day);
+    const height =
+      DAY_HEADING + (lines.length === 0 ? LINE + 1 : lines.reduce((sum, line) => sum + lineHeight(line), 0)) + DAY_GAP;
+    const fitsOnAPage = height <= BOTTOM - MARGIN;
+    if (y + height > BOTTOM && fitsOnAPage) newPage();
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text(formatLongDay(day.day), MARGIN, y + 4);
+    y += DAY_HEADING;
+    doc.setFontSize(10);
+
+    if (lines.length === 0) {
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(90);
+      doc.text("keine Einträge", TIME_X, y + 3);
+      doc.setTextColor(0);
+      y += LINE + 1;
+    }
+    for (const line of lines) {
+      // Only a day too long for a whole page is split, and then never inside an entry.
+      if (y + lineHeight(line) > BOTTOM) newPage();
+      doc.setFont("helvetica", "normal");
+      doc.text(line.time, TIME_X, y + 3);
+      doc.setTextColor(90);
+      doc.text(line.kind, KIND_X, y + 3);
+      doc.setTextColor(0);
+      doc.text(line.text, TEXT_X, y + 3);
+      if (line.note.length > 0) {
+        doc.setFont("helvetica", "italic");
+        doc.text(line.note, TEXT_X, y + 3 + line.text.length * LINE);
+      }
+      y += lineHeight(line);
+    }
+
+    doc.setDrawColor(190);
+    doc.setLineWidth(0.2);
+    doc.line(MARGIN, y + 1, PAGE_WIDTH - MARGIN, y + 1);
+    y += DAY_GAP;
+  }
+
+  const pages = doc.getNumberOfPages();
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  for (let page = 1; page <= pages; page++) {
+    doc.setPage(page);
+    doc.text(`Seite ${page} von ${pages}`, PAGE_WIDTH - MARGIN, PAGE_HEIGHT - MARGIN / 2, { align: "right" });
+  }
 
   return doc.output("blob");
 }

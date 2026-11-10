@@ -49,12 +49,16 @@ export function formatDateTime(date: Date): string {
   return `${formatDate(date)} ${formatClock(date)}`;
 }
 
+/** Day with year for the report, e.g. "Mo, 03.11.2026". */
+export function formatLongDay(day: Date): string {
+  return `${formatShortDay(day)}${day.getFullYear()}`;
+}
+
 /** Name of a day in the day bar: "Heute", "Gestern", "Sa, 07.11." or, in another year, "Fr, 26.12.2025". */
 export function formatDayName(day: Date, today: Date): string {
   if (isSameLocalDay(day, today)) return "Heute";
   if (isSameLocalDay(day, addDays(today, -1))) return "Gestern";
-  const short = formatShortDay(day);
-  return day.getFullYear() === today.getFullYear() ? short : `${short}${day.getFullYear()}`;
+  return day.getFullYear() === today.getFullYear() ? formatShortDay(day) : formatLongDay(day);
 }
 
 /** Value for <input type="date">, e.g. "2026-11-07". */

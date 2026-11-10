@@ -1,8 +1,7 @@
 import { addDays, entriesOfDay, startOfDay } from "./day";
 import type { Entry } from "./entry";
-import { describeEvent, type SymptomEvent } from "./event";
+import { describeEvent } from "./event";
 import { formatClock, toDateInputValue } from "./format";
-import type { Meal } from "./meal";
 
 /** How far back the report goes by default: the last 4 weeks up to today. */
 const DEFAULT_DAYS_BACK = 28;
@@ -14,11 +13,18 @@ export interface ReportRange {
 
 export type RangeResult = ({ ok: true } & ReportRange) | { ok: false; error: "from-after-to" };
 
-/** One table row: a day with its meals and events, each earliest first. */
+/** One day of the report with its meals and events mixed, earliest first. */
 export interface ReportDay {
   day: Date;
-  meals: Meal[];
-  events: SymptomEvent[];
+  entries: Entry[];
+}
+
+/** One line of the report: "08:00  Mahlzeit  Müsli", the note of an event below it. */
+export interface ReportLine {
+  time: string;
+  kind: "Mahlzeit" | "Ereignis";
+  text: string;
+  note?: string;
 }
 
 export function defaultReportRange(today: Date): ReportRange {
@@ -40,28 +46,21 @@ export function buildReportDays(entries: readonly Entry[], from: Date, to: Date)
   const days: ReportDay[] = [];
   for (let day = startOfDay(from); day.getTime() <= startOfDay(to).getTime(); day = addDays(day, 1)) {
     // entriesOfDay lists the latest first; a report reads like a diary, so turn it around.
-    const ofDay = entriesOfDay(entries, day).reverse();
-    days.push({
-      day,
-      meals: ofDay.filter((entry): entry is Meal => entry.kind === "meal"),
-      events: ofDay.filter((entry): entry is SymptomEvent => entry.kind === "event"),
-    });
+    days.push({ day, entries: entriesOfDay(entries, day).reverse() });
   }
   return days;
 }
 
 export function hasReportEntries(days: readonly ReportDay[]): boolean {
-  return days.some((day) => day.meals.length > 0 || day.events.length > 0);
+  return days.some((day) => day.entries.length > 0);
 }
 
-/** "08:00 Müsli". */
-export function mealLine(meal: Meal): string {
-  return `${formatClock(new Date(meal.time))} ${meal.text}`;
-}
-
-/** "10:30 Schmerzen mittel · Stuhlgang flüssig · Dringlichkeit stark"; the note is shown separately. */
-export function eventLine(event: SymptomEvent): string {
-  return `${formatClock(new Date(event.time))} ${describeEvent(event)}`;
+export function reportLine(entry: Entry): ReportLine {
+  const time = formatClock(new Date(entry.time));
+  if (entry.kind === "meal") return { time, kind: "Mahlzeit", text: entry.text };
+  const line: ReportLine = { time, kind: "Ereignis", text: describeEvent(entry) };
+  if (entry.note !== "") line.note = entry.note;
+  return line;
 }
 
 /** File name without any personal details, e.g. "Ess-und-Beschwerdeprotokoll_2026-10-12_bis_2026-11-10.pdf". */

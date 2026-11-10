@@ -2,12 +2,11 @@ import {
   buildReportDays,
   checkReportRange,
   defaultReportRange,
-  eventLine,
   formatDate,
-  formatShortDay,
+  formatLongDay,
   fromDateInputValue,
   hasReportEntries,
-  mealLine,
+  reportLine,
   toDateInputValue,
   type Entry,
   type ReportDay,
@@ -29,36 +28,35 @@ export interface ReportActions {
 const WRONG_ORDER = "Bitte wähle ein Von-Datum vor dem Bis-Datum.";
 const SHARE_FAILED = "Das PDF konnte nicht erstellt werden. Bitte versuch es noch einmal.";
 
-function cell(lines: HTMLElement[]): HTMLTableCellElement {
-  const td = document.createElement("td");
-  if (lines.length === 0) td.textContent = "–";
-  else td.append(...lines);
-  return td;
-}
-
-function text(className: string, value: string): HTMLElement {
-  const element = document.createElement("div");
+function text(tag: string, className: string, value: string): HTMLElement {
+  const element = document.createElement(tag);
   element.className = className;
   element.textContent = value;
   return element;
 }
 
-function row(day: ReportDay): HTMLTableRowElement {
-  const tr = document.createElement("tr");
-  const dayCell = document.createElement("th");
-  dayCell.scope = "row";
-  dayCell.textContent = formatShortDay(day.day);
-  tr.append(
-    dayCell,
-    cell(day.meals.map((meal) => text("report-line", mealLine(meal)))),
-    cell(
-      day.events.flatMap((event) => [
-        text("report-line", eventLine(event)),
-        ...(event.note === "" ? [] : [text("report-note", event.note)]),
-      ]),
-    ),
-  );
-  return tr;
+/** A day heading with its entries from morning to evening, like a diary page. */
+function dayBlock(day: ReportDay): HTMLElement {
+  const block = document.createElement("section");
+  block.className = "report-day";
+  block.append(text("h2", "report-day-name", formatLongDay(day.day)));
+  if (day.entries.length === 0) {
+    block.append(text("p", "report-none", "keine Einträge"));
+    return block;
+  }
+  const list = document.createElement("ul");
+  list.className = "report-lines";
+  for (const entry of day.entries) {
+    const line = reportLine(entry);
+    const item = document.createElement("li");
+    const content = document.createElement("div");
+    content.append(text("div", "report-text", line.text));
+    if (line.note !== undefined) content.append(text("div", "report-note", line.note));
+    item.append(text("span", "report-time", line.time), text("span", "report-kind", line.kind), content);
+    list.append(item);
+  }
+  block.append(list);
+  return block;
 }
 
 export function createReportPage(actions: ReportActions): ReportPage {
@@ -67,8 +65,7 @@ export function createReportPage(actions: ReportActions): ReportPage {
   const rangeText = byId<HTMLParagraphElement>("report-range");
   const share = byId<HTMLButtonElement>("report-share");
   const message = byId<HTMLParagraphElement>("report-message");
-  const table = byId<HTMLTableElement>("report-table");
-  const body = byId<HTMLTableSectionElement>("report-body");
+  const list = byId<HTMLElement>("report-list");
   const empty = byId<HTMLParagraphElement>("report-empty");
 
   let entries: readonly Entry[] = [];
@@ -91,7 +88,7 @@ export function createReportPage(actions: ReportActions): ReportPage {
     if (!result.ok) {
       rangeText.textContent = "";
       message.textContent = WRONG_ORDER;
-      table.hidden = true;
+      list.hidden = true;
       empty.hidden = true;
       setShareable(false);
       return;
@@ -102,8 +99,8 @@ export function createReportPage(actions: ReportActions): ReportPage {
     rangeText.textContent = `${formatDate(result.from)} – ${formatDate(result.to)}`;
     const days = buildReportDays(entries, result.from, result.to);
     const anything = hasReportEntries(days);
-    body.replaceChildren(...(anything ? days.map(row) : []));
-    table.hidden = !anything;
+    list.replaceChildren(...(anything ? days.map(dayBlock) : []));
+    list.hidden = !anything;
     empty.hidden = anything;
     setShareable(anything);
     if (anything) current = { days, range: { from: result.from, to: result.to } };
