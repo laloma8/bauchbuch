@@ -64,6 +64,53 @@ describe("createEntriesStore", () => {
     expect(store.loadEntries()).toEqual([pasta]);
   });
 
+  it("updates only the entry with the same id", () => {
+    const storage = new FakeStorage();
+    const store = createEntriesStore(storage);
+    for (const entry of [pasta, cramps, muesli]) store.addEntry(entry);
+    const fixed: SymptomEvent = { ...cramps, pain: "high", stool: "none", note: "" };
+    delete fixed.urgency;
+
+    expect(store.updateEntry({ ...pasta, text: "Nudeln mit Tomatensoße" })).toBe("ok");
+    expect(store.updateEntry(fixed)).toBe("ok");
+    expect(createEntriesStore(storage).loadEntries()).toEqual([
+      { ...pasta, text: "Nudeln mit Tomatensoße" },
+      fixed,
+      muesli,
+    ]);
+  });
+
+  it("deletes only the entry with this id", () => {
+    const storage = new FakeStorage();
+    const store = createEntriesStore(storage);
+    for (const entry of [pasta, cramps, muesli]) store.addEntry(entry);
+
+    expect(store.deleteEntry(cramps.id)).toBe("ok");
+    expect(createEntriesStore(storage).loadEntries()).toEqual([pasta, muesli]);
+  });
+
+  it("reports unknown ids and leaves the data alone", () => {
+    const storage = new FakeStorage();
+    const store = createEntriesStore(storage);
+    store.addEntry(pasta);
+    const before = storage.items.get(KEY);
+
+    expect(store.updateEntry({ ...muesli, id: "missing" })).toBe("failed");
+    expect(store.deleteEntry("missing")).toBe("failed");
+    expect(storage.items.get(KEY)).toBe(before);
+  });
+
+  it("reports failed writes when updating or deleting", () => {
+    const storage = new FakeStorage();
+    const store = createEntriesStore(storage);
+    store.addEntry(pasta);
+    storage.failOnWrite = true;
+
+    expect(store.updateEntry({ ...pasta, text: "Pizza" })).toBe("failed");
+    expect(store.deleteEntry(pasta.id)).toBe("failed");
+    expect(store.loadEntries()).toEqual([pasta]);
+  });
+
   it("never overwrites data it can't read", () => {
     for (const unreadable of [
       "{kaputt",
@@ -78,6 +125,8 @@ describe("createEntriesStore", () => {
 
       expect(store.loadEntries()).toEqual([]);
       expect(store.addEntry(pasta)).toBe("failed");
+      expect(store.updateEntry(pasta)).toBe("failed");
+      expect(store.deleteEntry(pasta.id)).toBe("failed");
       expect(storage.items.get(KEY)).toBe(unreadable);
     }
   });

@@ -10,6 +10,7 @@ import {
 } from "../core";
 import { byId } from "./dom";
 import { createIcon } from "./icons";
+import { setUpRowSwipe } from "./row-swipe";
 
 const MESSAGE_MS = 3000;
 
@@ -27,10 +28,26 @@ function line(className: string, text: string): HTMLElement {
   return element;
 }
 
-/** One row: time, the icon of the kind of entry, then what was entered. */
+/**
+ * One row: time, the icon of the kind of entry, then what was entered. The content lies on top of a
+ * red "Löschen" button that shows when the row is swiped to the left (see row-swipe.ts).
+ */
 function renderEntry(entry: Entry): HTMLLIElement {
   const item = document.createElement("li");
-  item.append(line("time", formatClock(new Date(entry.time))), createIcon(entry.kind, "kind-icon"));
+  item.className = "row";
+  item.dataset.id = entry.id;
+
+  const remove = document.createElement("button");
+  remove.type = "button";
+  remove.className = "row-delete";
+  remove.textContent = "Löschen";
+  remove.tabIndex = -1;
+
+  const content = document.createElement("div");
+  content.className = "row-content";
+  content.setAttribute("role", "button");
+  content.tabIndex = 0;
+  content.append(line("time", formatClock(new Date(entry.time))), createIcon(entry.kind, "kind-icon"));
   const details = document.createElement("span");
   details.className = "details";
   if (entry.kind === "meal") {
@@ -39,18 +56,24 @@ function renderEntry(entry: Entry): HTMLLIElement {
     details.append(line("summary", describeEvent(entry)));
     if (entry.note !== "") details.append(line("note", entry.note));
   }
-  item.append(details);
+  content.append(details);
+
+  item.append(remove, content);
   return item;
 }
 
-export interface DayBarActions {
+export interface StartActions {
   onPrevious(): void;
   onNext(): void;
   /** A day was chosen in the date picker. */
   onPick(day: Date): void;
+  /** An entry was tapped, to change it. */
+  onOpen(entry: Entry): void;
+  /** The red "Löschen" button behind a swiped entry was tapped. */
+  onDelete(entry: Entry): void;
 }
 
-export function createStartScreen(actions: DayBarActions): StartScreen {
+export function createStartScreen(actions: StartActions): StartScreen {
   const list = byId<HTMLUListElement>("today-list");
   const empty = byId<HTMLParagraphElement>("today-empty");
   const message = byId<HTMLParagraphElement>("start-message");
@@ -58,6 +81,23 @@ export function createStartScreen(actions: DayBarActions): StartScreen {
   const picker = byId<HTMLInputElement>("day-picker");
   const next = byId<HTMLButtonElement>("day-next");
   let messageTimer: ReturnType<typeof setTimeout> | undefined;
+  let entriesById = new Map<string, Entry>();
+
+  /** The entry of the row an event happened in. */
+  function entryOf(target: EventTarget | null): Entry | undefined {
+    const row = target instanceof Element ? target.closest<HTMLElement>(".row") : null;
+    return row?.dataset.id === undefined ? undefined : entriesById.get(row.dataset.id);
+  }
+
+  const rowSwipe = setUpRowSwipe(list);
+
+  // One listener for all rows; the rows are rebuilt on every render.
+  list.addEventListener("click", (event) => {
+    const entry = entryOf(event.target);
+    if (entry === undefined) return;
+    if (event.target instanceof Element && event.target.closest(".row-delete")) actions.onDelete(entry);
+    else actions.onOpen(entry);
+  });
 
   byId<HTMLButtonElement>("day-prev").addEventListener("click", () => actions.onPrevious());
   next.addEventListener("click", () => actions.onNext());
@@ -77,7 +117,9 @@ export function createStartScreen(actions: DayBarActions): StartScreen {
       picker.max = toDateInputValue(today);
       picker.value = toDateInputValue(day);
       const shown = entriesOfDay(entries, day);
+      rowSwipe.reset();
       list.replaceChildren(...shown.map(renderEntry));
+      entriesById = new Map(shown.map((entry) => [entry.id, entry]));
       empty.textContent = isToday ? "Heute noch keine Einträge." : "Keine Einträge an diesem Tag.";
       empty.hidden = shown.length > 0;
     },

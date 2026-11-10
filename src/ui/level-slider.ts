@@ -4,6 +4,8 @@ export interface LevelSlider<T extends string> {
   readonly value: T;
   /** Back to the lowest level. */
   reset(): void;
+  /** Shows a saved level without reporting it as a change. */
+  set(value: T): void;
 }
 
 /**
@@ -65,6 +67,10 @@ export function createLevelSlider<T extends string>(
     },
     reset() {
       index = 0;
+      show();
+    },
+    set(value) {
+      index = Math.max(0, levels.indexOf(value));
       show();
     },
   };

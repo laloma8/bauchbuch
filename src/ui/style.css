@@ -11,6 +11,7 @@
   --muted: #c5d0e8;
   --line: rgb(255 255 255 / 15%);
   --field-border: rgb(255 255 255 / 35%);
+  --danger: #c92a2a;
   --shadow: rgb(0 0 0 / 30%);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   color: var(--text);
@@ -167,14 +168,42 @@ button {
   padding: 0;
 }
 
-.entries li {
+/* A row: the content lies on top of a red "Löschen" button and slides left to show it. */
+.entries .row {
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1px solid var(--line);
+  /* Vertical scrolling stays with the browser; sideways moves are ours (row-swipe.ts). */
+  touch-action: pan-y;
+}
+
+.row-delete {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 88px;
+  border: none;
+  background: var(--danger);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.row-content {
+  position: relative;
   display: grid;
   grid-template-columns: auto auto 1fr;
   align-items: start;
   gap: 12px;
   padding: 12px 0;
-  border-bottom: 1px solid var(--line);
+  background: var(--background);
   overflow-wrap: anywhere;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.row-content.dragging {
+  transition: none;
 }
 
 .entries .details {
@@ -434,6 +463,56 @@ textarea {
 
 .level-labels button[aria-pressed="false"] {
   opacity: 0.75;
+}
+
+/* "Löschen" in an overlay, with its own question (see delete-confirm.ts). */
+.delete-area {
+  margin-top: 12px;
+}
+
+.delete-area[hidden],
+.delete-ask[hidden],
+.danger-outline[hidden] {
+  display: none;
+}
+
+.danger-outline,
+.danger,
+.secondary {
+  width: 100%;
+  padding: 14px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 1.05rem;
+}
+
+.danger-outline {
+  border: 2px solid var(--danger);
+  background: transparent;
+  color: var(--danger);
+}
+
+.delete-ask p {
+  margin: 4px 0 10px;
+  text-align: center;
+}
+
+.delete-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.secondary {
+  border: 2px solid var(--field-border);
+  background: transparent;
+  color: var(--text);
+}
+
+.danger {
+  border: none;
+  background: var(--danger);
+  color: #ffffff;
 }
 
 .primary {

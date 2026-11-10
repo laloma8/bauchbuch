@@ -13,6 +13,8 @@ export function setUpDaySwipe(
   element: Pick<Document, "addEventListener">,
   isBlocked: () => boolean,
   onSwipe: (direction: SwipeDirection) => void,
+  /** Touches that start here never change the day (e.g. entries, which swipe to delete). */
+  ignore: (target: EventTarget | null) => boolean = () => false,
 ): void {
   let start: { x: number; y: number } | undefined;
 
@@ -20,7 +22,10 @@ export function setUpDaySwipe(
     "touchstart",
     (event) => {
       const touch = event.touches[0];
-      start = event.touches.length === 1 && touch !== undefined ? { x: touch.clientX, y: touch.clientY } : undefined;
+      start =
+        event.touches.length === 1 && touch !== undefined && !ignore(event.target)
+          ? { x: touch.clientX, y: touch.clientY }
+          : undefined;
     },
     { passive: true },
   );

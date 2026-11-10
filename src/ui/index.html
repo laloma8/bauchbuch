@@ -54,6 +54,16 @@
           <label for="meal-text">Was hast du gegessen?</label>
           <textarea id="meal-text" rows="2" maxlength="200" autocomplete="off" enterkeyhint="done"></textarea>
           <button type="submit" id="meal-save" class="primary">Speichern</button>
+          <div id="meal-delete" class="delete-area" hidden>
+            <button type="button" id="meal-delete-start" class="danger-outline">Löschen</button>
+            <div id="meal-delete-ask" class="delete-ask" hidden>
+              <p>Diesen Eintrag löschen?</p>
+              <div class="delete-buttons">
+                <button type="button" id="meal-delete-cancel" class="secondary">Abbrechen</button>
+                <button type="button" id="meal-delete-confirm" class="danger">Löschen</button>
+              </div>
+            </div>
+          </div>
           <p id="meal-error" class="error" aria-live="assertive"></p>
         </form>
       </section>
@@ -80,6 +90,16 @@
           <label for="event-note">Notiz</label>
           <textarea id="event-note" rows="2" maxlength="200" autocomplete="off" enterkeyhint="done"></textarea>
           <button type="submit" id="event-save" class="primary">Speichern</button>
+          <div id="event-delete" class="delete-area" hidden>
+            <button type="button" id="event-delete-start" class="danger-outline">Löschen</button>
+            <div id="event-delete-ask" class="delete-ask" hidden>
+              <p>Diesen Eintrag löschen?</p>
+              <div class="delete-buttons">
+                <button type="button" id="event-delete-cancel" class="secondary">Abbrechen</button>
+                <button type="button" id="event-delete-confirm" class="danger">Löschen</button>
+              </div>
+            </div>
+          </div>
           <p id="event-error" class="error" aria-live="assertive"></p>
         </form>
       </section>

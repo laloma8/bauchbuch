@@ -15,6 +15,10 @@ export interface EntriesStore {
   loadEntries(): Entry[];
   /** Saves one more entry. "failed" if writing fails or the saved data can't be read. */
   addEntry(entry: Entry): "ok" | "failed";
+  /** Replaces the entry with the same id. "failed" if there is none, or as with addEntry. */
+  updateEntry(entry: Entry): "ok" | "failed";
+  /** Removes the entry with this id. "failed" if there is none, or as with addEntry. */
+  deleteEntry(id: string): "ok" | "failed";
 }
 
 type ReadResult = { ok: true; data: StoredData } | { ok: false };
@@ -59,22 +63,44 @@ function read(storage: BrowserStorage): ReadResult {
 }
 
 export function createEntriesStore(storage: BrowserStorage): EntriesStore {
+  /**
+   * Reads the saved entries again right before writing, lets `change` build the new list,
+   * and writes it. Data that can't be read is never overwritten; `change` returns undefined
+   * when there is nothing to change.
+   */
+  function write(change: (entries: Entry[]) => Entry[] | undefined): "ok" | "failed" {
+    const result = read(storage);
+    if (!result.ok) return "failed";
+    const entries = change(result.data.entries);
+    if (entries === undefined) return "failed";
+    const data: StoredData = { version: VERSION, entries };
+    try {
+      storage.setItem(KEY, JSON.stringify(data));
+      return "ok";
+    } catch {
+      return "failed";
+    }
+  }
+
   return {
     loadEntries() {
       const result = read(storage);
       return result.ok ? result.data.entries : [];
     },
     addEntry(entry) {
-      // Read again right before writing, and never overwrite data we can't read.
-      const result = read(storage);
-      if (!result.ok) return "failed";
-      const data: StoredData = { version: VERSION, entries: [...result.data.entries, entry] };
-      try {
-        storage.setItem(KEY, JSON.stringify(data));
-        return "ok";
-      } catch {
-        return "failed";
-      }
+      return write((entries) => [...entries, entry]);
+    },
+    updateEntry(entry) {
+      return write((entries) =>
+        entries.some((old) => old.id === entry.id)
+          ? entries.map((old) => (old.id === entry.id ? entry : old))
+          : undefined,
+      );
+    },
+    deleteEntry(id) {
+      return write((entries) =>
+        entries.some((old) => old.id === id) ? entries.filter((old) => old.id !== id) : undefined,
+      );
     },
   };
 }

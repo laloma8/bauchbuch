@@ -10,24 +10,24 @@ import {
   type SymptomEvent,
 } from "../core";
 import type { EntriesStore } from "../storage/entries-store";
+import { createDeleteConfirm } from "./delete-confirm";
 import { byId } from "./dom";
+import { DELETE_FAILED, SAVE_FAILED, type EntryForm, type EntryFormCallbacks } from "./entry-form";
 import { setUpGrowingTextarea } from "./grow-textarea";
 import { createLevelSlider } from "./level-slider";
 
-const ERROR_TEXT: Record<EventError | "failed", string> = {
+const ERROR_TEXT: Record<EventError, string> = {
   "nothing-set": "Bitte stell Schmerzen oder Stuhlgang ein.",
   "too-long": "Bitte höchstens 200 Zeichen.",
   future: "Die Zeit liegt in der Zukunft.",
-  failed: "Speichern hat nicht geklappt. Bitte versuch es noch einmal.",
 };
 
-export interface EventForm {
-  /** Resets the form: time = `prefill`, all sliders at zero, urgency hidden, empty note. */
-  open(prefill: Date): void;
-}
-
-export function createEventForm(store: EntriesStore, onSaved: (event: SymptomEvent) => void): EventForm {
+export function createEventForm(
+  store: EntriesStore,
+  callbacks: EntryFormCallbacks<SymptomEvent>,
+): EntryForm<SymptomEvent> {
   const form = byId<HTMLFormElement>("event");
+  const title = byId<HTMLElement>("event-title");
   const timeInput = byId<HTMLInputElement>("event-time");
   const noteInput = byId<HTMLTextAreaElement>("event-note");
   const urgencyField = byId<HTMLElement>("event-urgency-field");
@@ -44,8 +44,20 @@ export function createEventForm(store: EntriesStore, onSaved: (event: SymptomEve
     updateReady();
   });
 
-  // Guards against a double tap on "Speichern" saving the event twice.
-  let saved = false;
+  /** The event being changed; undefined while adding a new one. */
+  let editing: SymptomEvent | undefined;
+  // Guards against a double tap saving or deleting twice.
+  let done = false;
+
+  const deleteConfirm = createDeleteConfirm("event", () => {
+    if (done || editing === undefined) return;
+    if (store.deleteEntry(editing.id) === "failed") {
+      error.textContent = DELETE_FAILED;
+      return;
+    }
+    done = true;
+    callbacks.onDeleted();
+  });
 
   function check(now: Date): ReturnType<typeof validateEvent> {
     // An emptied time field means "now".
@@ -67,33 +79,48 @@ export function createEventForm(store: EntriesStore, onSaved: (event: SymptomEve
 
   form.addEventListener("submit", (event) => {
     event.preventDefault();
-    if (saved) return;
+    if (done) return;
     const result = check(new Date());
     if (!result.ok) {
       error.textContent = ERROR_TEXT[result.error];
       return;
     }
-    if (store.addEntry(result.event) === "failed") {
-      error.textContent = ERROR_TEXT.failed;
+    // A changed event keeps its id, so it replaces the old one.
+    const saved = editing === undefined ? result.event : { ...result.event, id: editing.id };
+    const outcome = editing === undefined ? store.addEntry(saved) : store.updateEntry(saved);
+    if (outcome === "failed") {
+      error.textContent = SAVE_FAILED;
       return;
     }
-    saved = true;
-    onSaved(result.event);
+    done = true;
+    callbacks.onSaved(saved);
   });
+
+  function fill(event: SymptomEvent | undefined, time: Date): void {
+    editing = event;
+    done = false;
+    title.textContent = event === undefined ? "Ereignis" : "Ereignis ändern";
+    timeInput.value = toDateTimeInputValue(time);
+    timeInput.max = toDateTimeInputValue(new Date());
+    pain.set(event?.pain ?? "none");
+    stool.set(event?.stool ?? "none");
+    urgency.set(event?.urgency ?? "none");
+    urgencyField.hidden = (event?.stool ?? "none") === "none";
+    noteInput.value = event?.note ?? "";
+    note.reset();
+    error.textContent = "";
+    deleteConfirm.show(event !== undefined);
+    updateReady();
+  }
 
   return {
     open(prefill) {
-      saved = false;
-      timeInput.value = toDateTimeInputValue(prefill);
-      timeInput.max = toDateTimeInputValue(new Date());
-      pain.reset();
-      stool.reset();
-      urgency.reset();
-      urgencyField.hidden = true;
-      noteInput.value = "";
-      note.reset();
-      error.textContent = "";
-      updateReady();
+      fill(undefined, prefill);
+    },
+    edit(event) {
+      fill(event, new Date(event.time));
+      // Let the note field fit a long note right away.
+      noteInput.dispatchEvent(new Event("input"));
     },
   };
 }

@@ -3,6 +3,7 @@ import { addDays, formatDateTime, prefillTime, startOfDay, type Entry } from "..
 import { createEntriesStore } from "../storage/entries-store";
 import { requestPersistentStorage } from "../storage/persistence";
 import { setUpDaySwipe } from "./day-swipe";
+import { DELETE_FAILED } from "./entry-form";
 import { byId } from "./dom";
 import { createEventForm } from "./event-form";
 import { createIcon } from "./icons";
@@ -36,6 +37,15 @@ const start = createStartScreen({
   onPrevious: () => showDay(addDays(shownDay, -1)),
   onNext: () => showDay(addDays(shownDay, 1)),
   onPick: showDay,
+  onOpen: (entry) => {
+    if (entry.kind === "meal") showSheet("meal", mealSheet, () => mealForm.edit(entry));
+    else showSheet("event", eventSheet, () => eventForm.edit(entry));
+  },
+  // The red button behind a swiped row is the confirmation, so delete right away.
+  onDelete: (entry) => {
+    start.showMessage(store.deleteEntry(entry.id) === "ok" ? "Gelöscht." : DELETE_FAILED);
+    renderDay();
+  },
 });
 
 // Every way of closing an overlay goes through the history, so the phone's
@@ -56,8 +66,13 @@ function onSaved(entry: Entry): void {
 
 const mealSheet = createSheet("meal", requestCloseSheet);
 const eventSheet = createSheet("event", requestCloseSheet);
-const mealForm = createMealForm(store, onSaved);
-const eventForm = createEventForm(store, onSaved);
+function onDeleted(): void {
+  pendingMessage = "Gelöscht.";
+  requestCloseSheet();
+}
+
+const mealForm = createMealForm(store, { onSaved, onDeleted });
+const eventForm = createEventForm(store, { onSaved, onDeleted });
 
 function showStart(): void {
   openSheet = undefined;
@@ -70,13 +85,18 @@ function showStart(): void {
   }
 }
 
-function showSheet(name: string, sheet: Sheet, form: { open(prefill: Date): void }): void {
+/** Opens an overlay; `fill` puts a new or an existing entry into its form first. */
+function showSheet(name: string, sheet: Sheet, fill: () => void): void {
   if (openSheet !== undefined) return;
   openSheet = sheet;
   history.pushState({ sheet: name }, "");
-  // On an earlier day, suggest that day at the current time of day, to make filling in quicker.
-  form.open(prefillTime(shownDay, new Date()));
+  fill();
   sheet.open();
+}
+
+/** On an earlier day, suggest that day at the current time of day, to make filling in quicker. */
+function newEntryTime(): Date {
+  return prefillTime(shownDay, new Date());
 }
 
 const openMeal = byId<HTMLButtonElement>("open-meal");
@@ -85,14 +105,16 @@ const openEvent = byId<HTMLButtonElement>("open-event");
 openMeal.prepend(createIcon("meal", "button-icon"));
 openEvent.prepend(createIcon("event", "button-icon"));
 for (const icon of document.querySelectorAll(".button-icon")) icon.setAttribute("aria-hidden", "true");
-openMeal.addEventListener("click", () => showSheet("meal", mealSheet, mealForm));
-openEvent.addEventListener("click", () => showSheet("event", eventSheet, eventForm));
+openMeal.addEventListener("click", () => showSheet("meal", mealSheet, () => mealForm.open(newEntryTime())));
+openEvent.addEventListener("click", () => showSheet("event", eventSheet, () => eventForm.open(newEntryTime())));
 
 // The whole screen reacts, also the empty space below a short list.
 setUpDaySwipe(
   document,
   () => openSheet !== undefined,
   (direction) => showDay(addDays(shownDay, direction === "previous" ? -1 : 1)),
+  // On an entry, sideways swipes show its "Löschen" button instead.
+  (target) => target instanceof Element && target.closest(".entries .row") !== null,
 );
 
 // The phone's back button and history.back() both land here.
