@@ -17,6 +17,9 @@
       <h1 class="visually-hidden">Gesundheitstracker</h1>
       <!-- Stays at the top; only the list below scrolls. -->
       <header class="top-bar">
+        <div class="top-actions">
+          <button type="button" id="open-report" class="icon-button" aria-label="Auswertung"></button>
+        </div>
         <p id="install-hint" class="install-hint" hidden>
           Leg die App auf den Home-Bildschirm: Teilen → Zum Home-Bildschirm. Einträge hier in Safari
           erscheinen dort nicht.
@@ -40,6 +43,26 @@
       <p id="today-empty" class="empty">Heute noch keine Einträge.</p>
       <p id="version" class="version"></p>
     </main>
+
+    <!-- The report for the doctor: a page of its own, opened from the icon at the top right. -->
+    <section id="report" class="report" hidden>
+      <button type="button" id="report-back" class="back-link">‹ Zurück</button>
+      <h1>Ess- und Beschwerdeprotokoll</h1>
+      <p id="report-range" class="report-range"></p>
+      <div class="report-dates">
+        <label>Von <input type="date" id="report-from" /></label>
+        <label>Bis <input type="date" id="report-to" /></label>
+      </div>
+      <button type="button" id="report-share" class="primary">PDF teilen</button>
+      <p id="report-message" class="error" aria-live="polite"></p>
+      <table id="report-table" class="report-table">
+        <thead>
+          <tr><th>Tag</th><th>Mahlzeiten</th><th>Ereignisse</th></tr>
+        </thead>
+        <tbody id="report-body"></tbody>
+      </table>
+      <p id="report-empty" class="empty" hidden>Keine Einträge in diesem Zeitraum.</p>
+    </section>
 
     <div id="meal-sheet" class="sheet-layer" hidden>
       <div id="meal-backdrop" class="sheet-backdrop"></div>

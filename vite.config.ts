@@ -28,6 +28,8 @@ export default defineConfig({
       injectRegister: "script",
       workbox: {
         globPatterns: ["**/*.{html,js,css,png,svg,webmanifest}"],
+        // jsPDF can also render HTML and SVG; the app never uses that, so don't store those parts.
+        globIgnores: ["**/html2canvas-*.js", "**/purify.es-*.js", "**/index.es-*.js"],
         cleanupOutdatedCaches: true,
       },
       manifest: {

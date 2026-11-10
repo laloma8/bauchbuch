@@ -111,6 +111,117 @@ button {
   cursor: default;
 }
 
+/* Small icon buttons at the top right of the header (report, later backup). */
+.top-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin: -8px -8px 0 0;
+}
+
+.icon-button {
+  width: 40px;
+  height: 40px;
+  padding: 6px;
+  border: none;
+  background: none;
+  color: var(--icon);
+}
+
+.top-icon {
+  width: 100%;
+  height: 100%;
+}
+
+/* Report page (see report-page.ts) */
+.report {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: calc(12px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom));
+}
+
+.report[hidden],
+#start[hidden],
+.report-table[hidden] {
+  display: none;
+}
+
+.back-link {
+  border: none;
+  background: none;
+  color: var(--icon);
+  font-size: 1.05rem;
+  padding: 8px 0;
+}
+
+.report h1 {
+  margin: 8px 0 4px;
+}
+
+.report-range {
+  margin: 0 0 12px;
+  color: var(--muted);
+}
+
+.report-dates {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.report-dates label {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.report-dates input[type="date"] {
+  -webkit-appearance: none;
+  appearance: none;
+  text-align: left;
+}
+
+.report .primary:disabled {
+  cursor: default;
+}
+
+.report-table {
+  width: 100%;
+  margin-top: 16px;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+
+.report-table th,
+.report-table td {
+  padding: 8px 6px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
+.report-table thead th {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.report-table tbody th {
+  width: 4.8em;
+  font-weight: 600;
+}
+
+.report-line + .report-line,
+.report-note + .report-line {
+  margin-top: 4px;
+}
+
+.report-note {
+  font-style: italic;
+  color: var(--muted);
+}
+
 /* Day bar: ‹ day name › – the name hides a date picker (see start-screen.ts). */
 .day-bar {
   display: grid;

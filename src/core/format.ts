@@ -39,9 +39,14 @@ export function fromDateTimeInputValue(value: string): Date | undefined {
   return valid ? date : undefined;
 }
 
+/** Local date, e.g. "12.10.2026". */
+export function formatDate(date: Date): string {
+  return `${pad(date.getDate())}.${pad(date.getMonth() + 1)}.${date.getFullYear()}`;
+}
+
 /** Local date and time, e.g. "09.11.2026 19:30". */
 export function formatDateTime(date: Date): string {
-  return `${pad(date.getDate())}.${pad(date.getMonth() + 1)}.${date.getFullYear()} ${formatClock(date)}`;
+  return `${formatDate(date)} ${formatClock(date)}`;
 }
 
 /** Name of a day in the day bar: "Heute", "Gestern", "Sa, 07.11." or, in another year, "Fr, 26.12.2025". */

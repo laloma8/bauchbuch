@@ -9,6 +9,8 @@ import { createEventForm } from "./event-form";
 import { createIcon } from "./icons";
 import { showInstallHintIfNeeded } from "./install-hint";
 import { createMealForm } from "./meal-form";
+import { createReportPage } from "./report-page";
+import { shareReportPdf } from "./report-pdf";
 import { createSheet, type Sheet } from "./sheet";
 import { createStartScreen } from "./start-screen";
 
@@ -74,7 +76,26 @@ function onDeleted(): void {
 const mealForm = createMealForm(store, { onSaved, onDeleted });
 const eventForm = createEventForm(store, { onSaved, onDeleted });
 
+const startPage = byId<HTMLElement>("start");
+const reportSection = byId<HTMLElement>("report");
+const report = createReportPage({
+  onBack: () => history.back(),
+  onShare: shareReportPdf,
+});
+
+/** The report is a page of its own; like the overlays it goes through the history. */
+function showReport(): void {
+  if (openSheet !== undefined || !reportSection.hidden) return;
+  history.pushState({ page: "report" }, "");
+  report.open(store.loadEntries(), new Date());
+  startPage.hidden = true;
+  reportSection.hidden = false;
+  window.scrollTo(0, 0);
+}
+
 function showStart(): void {
+  reportSection.hidden = true;
+  startPage.hidden = false;
   openSheet = undefined;
   mealSheet.close();
   eventSheet.close();
@@ -104,14 +125,18 @@ const openEvent = byId<HTMLButtonElement>("open-event");
 // The button has its own label ("… eintragen"), so the icon itself stays silent.
 openMeal.prepend(createIcon("meal", "button-icon"));
 openEvent.prepend(createIcon("event", "button-icon"));
-for (const icon of document.querySelectorAll(".button-icon")) icon.setAttribute("aria-hidden", "true");
+const openReport = byId<HTMLButtonElement>("open-report");
+openReport.append(createIcon("report", "top-icon"));
+openReport.addEventListener("click", showReport);
+for (const icon of document.querySelectorAll(".button-icon, .top-icon")) icon.setAttribute("aria-hidden", "true");
 openMeal.addEventListener("click", () => showSheet("meal", mealSheet, () => mealForm.open(newEntryTime())));
 openEvent.addEventListener("click", () => showSheet("event", eventSheet, () => eventForm.open(newEntryTime())));
 
 // The whole screen reacts, also the empty space below a short list.
 setUpDaySwipe(
   document,
-  () => openSheet !== undefined,
+  // Only on the start page, and never while an overlay is open.
+  () => openSheet !== undefined || !reportSection.hidden,
   (direction) => showDay(addDays(shownDay, direction === "previous" ? -1 : 1)),
   // On an entry, sideways swipes show its "Löschen" button instead.
   (target) => target instanceof Element && target.closest(".entries .row") !== null,

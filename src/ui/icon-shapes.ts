@@ -26,6 +26,15 @@ export const ICONS = {
       { tag: "path", d: "M8 11c-.6-2.6 1.4-4.3 3.6-4.8 1-.3 1.6-1.2 1.4-2.7 2.3 1 3.6 3.4 3.4 5.4-.1.8-.4 1.5-.9 2.1" },
     ],
   },
+  // A sheet of paper with a folded corner and lines of text: the report for the doctor.
+  report: {
+    label: "Auswertung",
+    shapes: [
+      { tag: "path", d: "M6 2.5h8.5L19 7v14.5H6z" },
+      { tag: "path", d: "M14.5 2.5V7H19" },
+      { tag: "path", d: "M9 11.5h7M9 15h7M9 18.5h4" },
+    ],
+  },
 } satisfies Record<string, { label: string; shapes: Shape[] }>;
 
 export type IconName = keyof typeof ICONS;

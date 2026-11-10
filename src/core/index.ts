@@ -18,6 +18,7 @@ export type { Entry } from "./entry";
 export { addDays, entriesOfDay, isSameLocalDay, prefillTime, startOfDay } from "./day";
 export {
   formatClock,
+  formatDate,
   formatDateTime,
   formatDayName,
   formatShortDay,
@@ -26,3 +27,15 @@ export {
   toDateInputValue,
   toDateTimeInputValue,
 } from "./format";
+export {
+  buildReportDays,
+  checkReportRange,
+  defaultReportRange,
+  eventLine,
+  hasReportEntries,
+  mealLine,
+  reportFileName,
+  type RangeResult,
+  type ReportDay,
+  type ReportRange,
+} from "./report";
