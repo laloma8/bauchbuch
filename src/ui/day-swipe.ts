@@ -10,7 +10,7 @@ export type SwipeDirection = "previous" | "next";
  * Listeners are passive, so normal scrolling is never held up.
  */
 export function setUpDaySwipe(
-  element: HTMLElement,
+  element: Pick<Document, "addEventListener">,
   isBlocked: () => boolean,
   onSwipe: (direction: SwipeDirection) => void,
 ): void {

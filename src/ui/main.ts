@@ -88,8 +88,9 @@ for (const icon of document.querySelectorAll(".button-icon")) icon.setAttribute(
 openMeal.addEventListener("click", () => showSheet("meal", mealSheet, mealForm));
 openEvent.addEventListener("click", () => showSheet("event", eventSheet, eventForm));
 
+// The whole screen reacts, also the empty space below a short list.
 setUpDaySwipe(
-  byId<HTMLElement>("start"),
+  document,
   () => openSheet !== undefined,
   (direction) => showDay(addDays(shownDay, direction === "previous" ? -1 : 1)),
 );
