@@ -22,8 +22,8 @@ const ERROR_TEXT: Record<EventError | "failed", string> = {
 };
 
 export interface EventForm {
-  /** Resets the form: time = now, all sliders at zero, urgency hidden, empty note. */
-  open(now: Date): void;
+  /** Resets the form: time = `prefill`, all sliders at zero, urgency hidden, empty note. */
+  open(prefill: Date): void;
 }
 
 export function createEventForm(store: EntriesStore, onSaved: (event: SymptomEvent) => void): EventForm {
@@ -82,10 +82,10 @@ export function createEventForm(store: EntriesStore, onSaved: (event: SymptomEve
   });
 
   return {
-    open(now) {
+    open(prefill) {
       saved = false;
-      timeInput.value = toDateTimeInputValue(now);
-      timeInput.max = toDateTimeInputValue(now);
+      timeInput.value = toDateTimeInputValue(prefill);
+      timeInput.max = toDateTimeInputValue(new Date());
       pain.reset();
       stool.reset();
       urgency.reset();

@@ -1,7 +1,8 @@
 import "./style.css";
-import { formatDateTime, formatShortDay, isSameLocalDay, type Entry } from "../core";
+import { addDays, formatDateTime, prefillTime, startOfDay, type Entry } from "../core";
 import { createEntriesStore } from "../storage/entries-store";
 import { requestPersistentStorage } from "../storage/persistence";
+import { setUpDaySwipe } from "./day-swipe";
 import { byId } from "./dom";
 import { createEventForm } from "./event-form";
 import { createIcon } from "./icons";
@@ -11,9 +12,31 @@ import { createSheet, type Sheet } from "./sheet";
 import { createStartScreen } from "./start-screen";
 
 const store = createEntriesStore(window.localStorage);
-const start = createStartScreen();
 let pendingMessage: string | undefined;
 let openSheet: Sheet | undefined;
+/** The day shown under the buttons (local midnight); never later than today. */
+let shownDay = startOfDay(new Date());
+
+function today(): Date {
+  return startOfDay(new Date());
+}
+
+function renderDay(): void {
+  start.render(store.loadEntries(), shownDay, today());
+}
+
+function showDay(day: Date): void {
+  const latest = today();
+  // The date picker's limit isn't always honoured on iOS, so cap it here too.
+  shownDay = day.getTime() > latest.getTime() ? latest : startOfDay(day);
+  renderDay();
+}
+
+const start = createStartScreen({
+  onPrevious: () => showDay(addDays(shownDay, -1)),
+  onNext: () => showDay(addDays(shownDay, 1)),
+  onPick: showDay,
+});
 
 // Every way of closing an overlay goes through the history, so the phone's
 // back button, swiping down and tapping outside behave the same. Only the first
@@ -25,8 +48,9 @@ function requestCloseSheet(): void {
 }
 
 function onSaved(entry: Entry): void {
-  const time = new Date(entry.time);
-  pendingMessage = isSameLocalDay(time, new Date()) ? "Gespeichert." : `Gespeichert für ${formatShortDay(time)}`;
+  // Show the day the entry belongs to, so you see it right away.
+  shownDay = startOfDay(new Date(entry.time));
+  pendingMessage = "Gespeichert.";
   requestCloseSheet();
 }
 
@@ -39,18 +63,19 @@ function showStart(): void {
   openSheet = undefined;
   mealSheet.close();
   eventSheet.close();
-  start.renderToday(store.loadEntries(), new Date());
+  renderDay();
   if (pendingMessage !== undefined) {
     start.showMessage(pendingMessage);
     pendingMessage = undefined;
   }
 }
 
-function showSheet(name: string, sheet: Sheet, form: { open(now: Date): void }): void {
+function showSheet(name: string, sheet: Sheet, form: { open(prefill: Date): void }): void {
   if (openSheet !== undefined) return;
   openSheet = sheet;
   history.pushState({ sheet: name }, "");
-  form.open(new Date());
+  // On an earlier day, suggest that day at the current time of day, to make filling in quicker.
+  form.open(prefillTime(shownDay, new Date()));
   sheet.open();
 }
 
@@ -63,12 +88,18 @@ for (const icon of document.querySelectorAll(".button-icon")) icon.setAttribute(
 openMeal.addEventListener("click", () => showSheet("meal", mealSheet, mealForm));
 openEvent.addEventListener("click", () => showSheet("event", eventSheet, eventForm));
 
+setUpDaySwipe(
+  byId<HTMLElement>("start"),
+  () => openSheet !== undefined,
+  (direction) => showDay(addDays(shownDay, direction === "previous" ? -1 : 1)),
+);
+
 // The phone's back button and history.back() both land here.
 window.addEventListener("popstate", showStart);
 
-// "Heute" must follow the date when the app is reopened, e.g. after midnight.
+// Reopening the app always shows today – also when the date changed overnight.
 document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "visible") start.renderToday(store.loadEntries(), new Date());
+  if (document.visibilityState === "visible") showDay(today());
 });
 
 showInstallHintIfNeeded();

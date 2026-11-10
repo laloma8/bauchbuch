@@ -11,8 +11,8 @@ const ERROR_TEXT: Record<MealError | "failed", string> = {
 };
 
 export interface MealForm {
-  /** Resets the form: time = now, empty text, no error. */
-  open(now: Date): void;
+  /** Resets the form: time = `prefill`, empty text, no error. */
+  open(prefill: Date): void;
 }
 
 export function createMealForm(store: EntriesStore, onSaved: (meal: Meal) => void): MealForm {
@@ -57,10 +57,10 @@ export function createMealForm(store: EntriesStore, onSaved: (meal: Meal) => voi
   });
 
   return {
-    open(now) {
+    open(prefill) {
       saved = false;
-      timeInput.value = toDateTimeInputValue(now);
-      timeInput.max = toDateTimeInputValue(now);
+      timeInput.value = toDateTimeInputValue(prefill);
+      timeInput.max = toDateTimeInputValue(new Date());
       textInput.value = "";
       text.reset();
       error.textContent = "";

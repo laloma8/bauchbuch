@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { formatClock, formatDateTime, formatShortDay, fromDateTimeInputValue, toDateTimeInputValue } from "./format";
+import {
+  formatClock,
+  formatDateTime,
+  formatDayName,
+  formatShortDay,
+  fromDateInputValue,
+  fromDateTimeInputValue,
+  toDateInputValue,
+  toDateTimeInputValue,
+} from "./format";
 
 describe("formatClock", () => {
   it("pads hours and minutes", () => {
@@ -50,5 +59,35 @@ describe("datetime-local values", () => {
   it("uses German time (summer and winter)", () => {
     expect(toDateTimeInputValue(new Date("2026-07-01T10:00:00Z"))).toBe("2026-07-01T12:00");
     expect(toDateTimeInputValue(new Date("2026-11-09T10:00:00Z"))).toBe("2026-11-09T11:00");
+  });
+});
+
+describe("formatDayName", () => {
+  const today = new Date(2026, 10, 9);
+
+  it("names today and yesterday", () => {
+    expect(formatDayName(new Date(2026, 10, 9), today)).toBe("Heute");
+    expect(formatDayName(new Date(2026, 10, 8), today)).toBe("Gestern");
+  });
+
+  it("shows weekday and date for older days, with the year when it differs", () => {
+    expect(formatDayName(new Date(2026, 10, 7), today)).toBe("Sa, 07.11.");
+    expect(formatDayName(new Date(2025, 11, 26), today)).toBe("Fr, 26.12.2025");
+  });
+
+  it("says yesterday across the new year", () => {
+    expect(formatDayName(new Date(2025, 11, 31), new Date(2026, 0, 1))).toBe("Gestern");
+  });
+});
+
+describe("date input values", () => {
+  it("round-trips a local day", () => {
+    expect(toDateInputValue(new Date(2026, 10, 7, 15, 0))).toBe("2026-11-07");
+    expect(fromDateInputValue("2026-11-07")).toEqual(new Date(2026, 10, 7));
+  });
+
+  it("returns undefined for empty or invalid values", () => {
+    expect(fromDateInputValue("")).toBeUndefined();
+    expect(fromDateInputValue("2026-02-30")).toBeUndefined();
   });
 });

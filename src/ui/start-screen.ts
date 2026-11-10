@@ -1,12 +1,21 @@
-import { describeEvent, entriesOfDay, formatClock, type Entry } from "../core";
+import {
+  describeEvent,
+  entriesOfDay,
+  formatClock,
+  formatDayName,
+  fromDateInputValue,
+  isSameLocalDay,
+  toDateInputValue,
+  type Entry,
+} from "../core";
 import { byId } from "./dom";
 import { createIcon } from "./icons";
 
 const MESSAGE_MS = 3000;
 
 export interface StartScreen {
-  /** Shows today's meals and events, latest first. */
-  renderToday(entries: readonly Entry[], now: Date): void;
+  /** Shows the meals and events of `day`, latest first, and the day bar above them. */
+  render(entries: readonly Entry[], day: Date, today: Date): void;
   /** Shows a short note that fades after a few seconds. */
   showMessage(text: string): void;
 }
@@ -34,17 +43,43 @@ function renderEntry(entry: Entry): HTMLLIElement {
   return item;
 }
 
-export function createStartScreen(): StartScreen {
+export interface DayBarActions {
+  onPrevious(): void;
+  onNext(): void;
+  /** A day was chosen in the date picker. */
+  onPick(day: Date): void;
+}
+
+export function createStartScreen(actions: DayBarActions): StartScreen {
   const list = byId<HTMLUListElement>("today-list");
   const empty = byId<HTMLParagraphElement>("today-empty");
   const message = byId<HTMLParagraphElement>("start-message");
+  const dayName = byId<HTMLElement>("day-name");
+  const picker = byId<HTMLInputElement>("day-picker");
+  const next = byId<HTMLButtonElement>("day-next");
   let messageTimer: ReturnType<typeof setTimeout> | undefined;
 
+  byId<HTMLButtonElement>("day-prev").addEventListener("click", () => actions.onPrevious());
+  next.addEventListener("click", () => actions.onNext());
+  // iOS reports the choice with "change" when the picker closes, other browsers with "input".
+  const pick = () => {
+    const day = fromDateInputValue(picker.value);
+    if (day !== undefined) actions.onPick(day);
+  };
+  picker.addEventListener("change", pick);
+  picker.addEventListener("input", pick);
+
   return {
-    renderToday(entries, now) {
-      const today = entriesOfDay(entries, now);
-      list.replaceChildren(...today.map(renderEntry));
-      empty.hidden = today.length > 0;
+    render(entries, day, today) {
+      const isToday = isSameLocalDay(day, today);
+      dayName.textContent = formatDayName(day, today);
+      next.disabled = isToday;
+      picker.max = toDateInputValue(today);
+      picker.value = toDateInputValue(day);
+      const shown = entriesOfDay(entries, day);
+      list.replaceChildren(...shown.map(renderEntry));
+      empty.textContent = isToday ? "Heute noch keine Einträge." : "Keine Einträge an diesem Tag.";
+      empty.hidden = shown.length > 0;
     },
 
     showMessage(text) {

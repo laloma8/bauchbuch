@@ -15,5 +15,14 @@ export {
   type UrgencyLevel,
 } from "./event";
 export type { Entry } from "./entry";
-export { entriesOfDay, isSameLocalDay } from "./day";
-export { formatClock, formatDateTime, formatShortDay, fromDateTimeInputValue, toDateTimeInputValue } from "./format";
+export { addDays, entriesOfDay, isSameLocalDay, prefillTime, startOfDay } from "./day";
+export {
+  formatClock,
+  formatDateTime,
+  formatDayName,
+  formatShortDay,
+  fromDateInputValue,
+  fromDateTimeInputValue,
+  toDateInputValue,
+  toDateTimeInputValue,
+} from "./format";

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { entriesOfDay, isSameLocalDay } from "./day";
+import { addDays, entriesOfDay, isSameLocalDay, prefillTime, startOfDay } from "./day";
 import type { Entry } from "./entry";
 
 function meal(text: string, time: Date): Entry {
@@ -52,5 +52,32 @@ describe("entriesOfDay", () => {
 
   it("returns an empty list when nothing was entered that day", () => {
     expect(entriesOfDay([], new Date(2026, 10, 9))).toEqual([]);
+  });
+});
+
+describe("addDays", () => {
+  it("moves to midnight of the neighbouring day, also across clock changes", () => {
+    expect(addDays(new Date(2026, 9, 25), 1)).toEqual(new Date(2026, 9, 26));
+    expect(addDays(new Date(2026, 9, 26), -1)).toEqual(new Date(2026, 9, 25));
+    expect(addDays(new Date(2026, 2, 29), 1)).toEqual(new Date(2026, 2, 30));
+    expect(addDays(new Date(2026, 0, 1), -1)).toEqual(new Date(2025, 11, 31));
+  });
+});
+
+describe("startOfDay", () => {
+  it("drops the time of day", () => {
+    expect(startOfDay(new Date(2026, 10, 9, 19, 45))).toEqual(new Date(2026, 10, 9));
+  });
+});
+
+describe("prefillTime", () => {
+  const now = new Date(2026, 10, 9, 19, 45, 30);
+
+  it("is now when today is shown", () => {
+    expect(prefillTime(new Date(2026, 10, 9), now)).toBe(now);
+  });
+
+  it("is the shown day at the current time of day otherwise", () => {
+    expect(prefillTime(new Date(2026, 10, 8), now)).toEqual(new Date(2026, 10, 8, 19, 45));
   });
 });

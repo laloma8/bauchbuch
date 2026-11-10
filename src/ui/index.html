@@ -26,8 +26,16 @@
           <button type="button" id="open-event" class="big" aria-label="Ereignis eintragen"></button>
         </div>
         <p id="start-message" class="message" aria-live="polite"></p>
+        <!-- Which day is shown: arrows to page, tap the name to pick a date. -->
+        <nav class="day-bar" aria-label="Tag wählen">
+          <button type="button" id="day-prev" class="day-arrow" aria-label="Tag davor">‹</button>
+          <label class="day-name">
+            <h2 id="day-name">Heute</h2>
+            <input type="date" id="day-picker" aria-label="Tag wählen" />
+          </label>
+          <button type="button" id="day-next" class="day-arrow" aria-label="Tag danach">›</button>
+        </nav>
       </header>
-      <h2>Heute</h2>
       <ul id="today-list" class="entries"></ul>
       <p id="today-empty" class="empty">Heute noch keine Einträge.</p>
       <p id="version" class="version"></p>

@@ -1,3 +1,5 @@
+import { addDays, isSameLocalDay } from "./day";
+
 const WEEKDAYS = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
 
 function pad(value: number): string {
@@ -40,4 +42,22 @@ export function fromDateTimeInputValue(value: string): Date | undefined {
 /** Local date and time, e.g. "09.11.2026 19:30". */
 export function formatDateTime(date: Date): string {
   return `${pad(date.getDate())}.${pad(date.getMonth() + 1)}.${date.getFullYear()} ${formatClock(date)}`;
+}
+
+/** Name of a day in the day bar: "Heute", "Gestern", "Sa, 07.11." or, in another year, "Fr, 26.12.2025". */
+export function formatDayName(day: Date, today: Date): string {
+  if (isSameLocalDay(day, today)) return "Heute";
+  if (isSameLocalDay(day, addDays(today, -1))) return "Gestern";
+  const short = formatShortDay(day);
+  return day.getFullYear() === today.getFullYear() ? short : `${short}${day.getFullYear()}`;
+}
+
+/** Value for <input type="date">, e.g. "2026-11-07". */
+export function toDateInputValue(day: Date): string {
+  return `${day.getFullYear()}-${pad(day.getMonth() + 1)}-${pad(day.getDate())}`;
+}
+
+/** Reads an <input type="date"> value as a local day; undefined if empty or invalid. */
+export function fromDateInputValue(value: string): Date | undefined {
+  return fromDateTimeInputValue(`${value}T00:00`);
 }
