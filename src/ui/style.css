@@ -132,6 +132,51 @@ button {
   height: 100%;
 }
 
+.top-actions {
+  gap: 4px;
+}
+
+/* Backup reminder under the buttons (see main.ts). */
+.reminder {
+  display: block;
+  width: 100%;
+  margin: 4px 0 0;
+  padding: 6px 0;
+  border: none;
+  background: none;
+  color: var(--icon);
+  font-size: 0.9rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.reminder[hidden] {
+  display: none;
+}
+
+/* Backup overlay (see backup-sheet.ts) */
+.backup-count {
+  margin: 16px 0 4px;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.backup-last {
+  margin: 0 0 8px;
+  color: var(--muted);
+}
+
+.backup-hint {
+  margin: 16px 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+#backup-share:disabled {
+  cursor: default;
+}
+
 /* Report page (see report-page.ts) */
 .report {
   max-width: 720px;

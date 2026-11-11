@@ -18,6 +18,7 @@
       <!-- Stays at the top; only the list below scrolls. -->
       <header class="top-bar">
         <div class="top-actions">
+          <button type="button" id="open-backup" class="icon-button" aria-label="Sicherung"></button>
           <button type="button" id="open-report" class="icon-button" aria-label="Auswertung"></button>
         </div>
         <p id="install-hint" class="install-hint" hidden>
@@ -29,6 +30,7 @@
           <button type="button" id="open-event" class="big" aria-label="Ereignis eintragen"></button>
         </div>
         <p id="start-message" class="message" aria-live="polite"></p>
+        <button type="button" id="backup-reminder" class="reminder" hidden></button>
         <!-- Which day is shown: arrows to page, tap the name to pick a date. -->
         <nav class="day-bar" aria-label="Tag wählen">
           <button type="button" id="day-prev" class="day-arrow" aria-label="Tag davor">‹</button>
@@ -120,6 +122,23 @@
           </div>
           <p id="event-error" class="error" aria-live="assertive"></p>
         </form>
+      </section>
+    </div>
+    <div id="backup-sheet" class="sheet-layer" hidden>
+      <div id="backup-backdrop" class="sheet-backdrop"></div>
+      <section id="backup-panel" class="sheet" role="dialog" aria-modal="true" aria-labelledby="backup-title">
+        <div class="sheet-handle-area">
+          <div class="sheet-handle" aria-hidden="true"></div>
+          <h2 id="backup-title">Sicherung</h2>
+        </div>
+        <p id="backup-count" class="backup-count"></p>
+        <p id="backup-last" class="backup-last"></p>
+        <button type="button" id="backup-share" class="primary">Sicherung teilen</button>
+        <p id="backup-message" class="error" aria-live="polite"></p>
+        <p class="backup-hint">
+          Am besten „In Dateien sichern“ → iCloud Drive. Die Datei enthält alle deine Einträge – leg sie
+          nur an einem sicheren Ort ab.
+        </p>
       </section>
     </div>
     <script type="module" src="./main.ts"></script>

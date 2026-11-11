@@ -1,7 +1,9 @@
 import "./style.css";
-import { addDays, formatDateTime, prefillTime, startOfDay, type Entry } from "../core";
+import { addDays, backupReminder, formatDateTime, prefillTime, startOfDay, type Entry } from "../core";
+import { createBackupInfo } from "../storage/backup-info";
 import { createEntriesStore } from "../storage/entries-store";
 import { requestPersistentStorage } from "../storage/persistence";
+import { createBackupSheet } from "./backup-sheet";
 import { setUpDaySwipe } from "./day-swipe";
 import { DELETE_FAILED } from "./entry-form";
 import { byId } from "./dom";
@@ -15,6 +17,8 @@ import { createSheet, type Sheet } from "./sheet";
 import { createStartScreen } from "./start-screen";
 
 const store = createEntriesStore(window.localStorage);
+const backupInfo = createBackupInfo(window.localStorage);
+const reminder = byId<HTMLButtonElement>("backup-reminder");
 let pendingMessage: string | undefined;
 let openSheet: Sheet | undefined;
 /** The day shown under the buttons (local midnight); never later than today. */
@@ -25,7 +29,12 @@ function today(): Date {
 }
 
 function renderDay(): void {
-  start.render(store.loadEntries(), shownDay, today());
+  const entries = store.loadEntries();
+  start.render(entries, shownDay, today());
+  // A small hint under the buttons when the last backup is more than 14 days old (or never happened).
+  const hint = backupReminder(backupInfo.lastBackup(), entries.length, new Date());
+  reminder.hidden = hint === undefined;
+  reminder.textContent = hint ?? "";
 }
 
 function showDay(day: Date): void {
@@ -68,6 +77,11 @@ function onSaved(entry: Entry): void {
 
 const mealSheet = createSheet("meal", requestCloseSheet);
 const eventSheet = createSheet("event", requestCloseSheet);
+const backupSheet = createSheet("backup", requestCloseSheet);
+const backup = createBackupSheet((when) => {
+  backupInfo.markBackedUp(when);
+  renderDay();
+});
 function onDeleted(): void {
   pendingMessage = "Gelöscht.";
   requestCloseSheet();
@@ -99,6 +113,7 @@ function showStart(): void {
   openSheet = undefined;
   mealSheet.close();
   eventSheet.close();
+  backupSheet.close();
   renderDay();
   if (pendingMessage !== undefined) {
     start.showMessage(pendingMessage);
@@ -125,6 +140,14 @@ const openEvent = byId<HTMLButtonElement>("open-event");
 // The button has its own label ("… eintragen"), so the icon itself stays silent.
 openMeal.prepend(createIcon("meal", "button-icon"));
 openEvent.prepend(createIcon("event", "button-icon"));
+function showBackup(): void {
+  showSheet("backup", backupSheet, () => backup.show(store.loadEntries(), backupInfo.lastBackup()));
+}
+
+const openBackup = byId<HTMLButtonElement>("open-backup");
+openBackup.append(createIcon("backup", "top-icon"));
+openBackup.addEventListener("click", showBackup);
+reminder.addEventListener("click", showBackup);
 const openReport = byId<HTMLButtonElement>("open-report");
 openReport.append(createIcon("report", "top-icon"));
 openReport.addEventListener("click", showReport);

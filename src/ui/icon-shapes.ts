@@ -35,6 +35,15 @@ export const ICONS = {
       { tag: "path", d: "M9 11.5h7M9 15h7M9 18.5h4" },
     ],
   },
+  // An arrow going down into a tray: keep a copy of everything.
+  backup: {
+    label: "Sicherung",
+    shapes: [
+      { tag: "path", d: "M12 3v11" },
+      { tag: "path", d: "M7.5 9.5 12 14l4.5-4.5" },
+      { tag: "path", d: "M4 14.5V19a1.5 1.5 0 0 0 1.5 1.5h13A1.5 1.5 0 0 0 20 19v-4.5" },
+    ],
+  },
 } satisfies Record<string, { label: string; shapes: Shape[] }>;
 
 export type IconName = keyof typeof ICONS;

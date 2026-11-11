@@ -40,3 +40,12 @@ export {
   type ReportLine,
   type ReportRange,
 } from "./report";
+export {
+  BACKUP_APP,
+  BACKUP_FORMAT,
+  backupFileName,
+  backupReminder,
+  createBackup,
+  formatEntryCount,
+  type BackupFile,
+} from "./backup";

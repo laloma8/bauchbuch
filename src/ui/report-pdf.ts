@@ -1,4 +1,5 @@
 import { formatDate, formatLongDay, reportFileName, reportLine, type ReportDay, type ReportRange } from "../core";
+import { shareFile } from "./share-file";
 
 const TITLE = "Ess- und Beschwerdeprotokoll";
 
@@ -119,26 +120,10 @@ export async function buildReportPdf(days: readonly ReportDay[], range: ReportRa
   return doc.output("blob");
 }
 
-/**
- * Hands the PDF to the iPhone's share menu (print, save to Files, mail …). Where sharing files
- * isn't possible, e.g. on the laptop, the PDF is downloaded instead. Cancelling the menu is fine.
- */
+/** Builds the PDF and hands it to the share menu (or downloads it where sharing isn't possible). */
 export async function shareReportPdf(days: readonly ReportDay[], range: ReportRange): Promise<void> {
-  const name = reportFileName(range.from, range.to);
-  const file = new File([await buildReportPdf(days, range)], name, { type: "application/pdf" });
-  if (typeof navigator.canShare === "function" && navigator.canShare({ files: [file] })) {
-    try {
-      await navigator.share({ files: [file], title: TITLE });
-    } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") return;
-      throw error;
-    }
-    return;
-  }
-  const url = URL.createObjectURL(file);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = name;
-  link.click();
-  setTimeout(() => URL.revokeObjectURL(url), 10_000);
+  const file = new File([await buildReportPdf(days, range)], reportFileName(range.from, range.to), {
+    type: "application/pdf",
+  });
+  await shareFile(file, TITLE);
 }
